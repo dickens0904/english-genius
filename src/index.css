@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-primary: #3b82f6;
+  --color-sunny: #f59e0b;
+  --color-fresh: #10b981;
+  --color-coral: #f97316;
+  --color-lavender: #8b5cf6;
+  --color-pink: #ec4899;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Quicksand', system-ui, sans-serif;
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 50%, #fdf2f8 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Nunito', system-ui, sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+}
+
+@media print {
+  body {
+    background: white !important;
+    font-size: 12pt;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.print-only {
+  display: none;
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 via-lavender-500 to-pink-500;
+  }
+
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  }
+
+  .bg-gradient-warm {
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+  }
+
+  .bg-gradient-fresh {
+    background: linear-gradient(135deg, #10b981, #3b82f6);
+  }
+
+  .bg-gradient-fun {
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3), 0 0 30px rgba(139, 92, 246, 0.2);
+  }
+
+  .shadow-glow-yellow {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3), 0 0 30px rgba(249, 115, 22, 0.2);
+  }
+
+  .shadow-glow-green {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3), 0 0 30px rgba(59, 130, 246, 0.2);
+  }
+}
