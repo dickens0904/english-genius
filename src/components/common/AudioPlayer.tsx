@@ -55,7 +55,8 @@ export default function AudioPlayer({
   useEffect(() => {
     if (autoPlay && text) speak();
     return () => window.speechSynthesis.cancel();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // 依赖 text/speed：文案或语速变化后自动重新朗读
+  }, [autoPlay, text, speed, speak]);
 
   return (
     <div className={cn("flex items-center gap-3", className)}>

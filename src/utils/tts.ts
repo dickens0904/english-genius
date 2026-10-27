@@ -1,3 +1,22 @@
+// 检测是否存在可用语音引擎（voices 异步加载，加超时兜底避免永久挂起）
+export function hasVoiceEngine(): Promise<boolean> {
+  if (!('speechSynthesis' in window)) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      resolve(window.speechSynthesis.getVoices().length > 0);
+    }, 1000);
+    const check = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        clearTimeout(timer);
+        resolve(true);
+      }
+    };
+    check();
+    window.speechSynthesis.onvoiceschanged = check;
+  });
+}
+
 export function getVoices(): Promise<SpeechSynthesisVoice[]> {
   return new Promise((resolve) => {
     const voices = window.speechSynthesis.getVoices();
@@ -36,6 +55,13 @@ export function speakText(
     utterance.volume = options?.volume ?? 1;
 
     const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      // 无语音引擎时给出明确提示，便于调用方提示用户安装 TTS 引擎
+      utterance.onend = () => resolve();
+      utterance.onerror = (e) => reject(new Error('语音引擎不可用，请在系统安装 TTS 语音引擎'));
+      window.speechSynthesis.speak(utterance);
+      return;
+    }
     const englishVoice =
       voices.find((v) => v.lang === 'en-US') ||
       voices.find((v) => v.lang.startsWith('en'));
