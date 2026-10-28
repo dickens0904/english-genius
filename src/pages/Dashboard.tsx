@@ -1,9 +1,13 @@
 import { useMemo } from "react";
-import { motion } from "framer-motion";
-import { Star, Flame, BookOpen, Trophy, Lock } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Star, Flame, BookOpen, Trophy, Lock, Target, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { units } from "@/data";
-import { useProgressStore } from "@/stores/useProgressStore";
+import {
+  useProgressStore,
+  DAILY_GOAL_TARGET,
+  todayKey,
+} from "@/stores/useProgressStore";
 import Layout from "@/components/layout/Layout";
 
 const BADGES = [
@@ -22,6 +26,13 @@ export default function Dashboard() {
   const unitProgressMap = useProgressStore((s) => s.unitProgress);
   const badges = useProgressStore((s) => s.badges);
   const currentStreak = useProgressStore((s) => s.currentStreak);
+  const dailyGoal = useProgressStore((s) => s.dailyGoal);
+
+  const completionsToday =
+    dailyGoal.date === todayKey() ? dailyGoal.completions : 0;
+  const goalPercent = Math.min(completionsToday / DAILY_GOAL_TARGET, 1);
+  const goalDone = completionsToday >= DAILY_GOAL_TARGET;
+  const ringCircumference = 2 * Math.PI * 34;
 
   const stats = useMemo(() => {
     let unitsCompleted = 0;
@@ -108,6 +119,74 @@ export default function Dashboard() {
             </p>
           </div>
         </motion.div>
+
+        {/* Daily Goal */}
+        <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm flex items-center gap-5"
+        >
+          <div className="relative w-20 h-20 flex-shrink-0">
+            <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+              <circle
+                cx="40"
+                cy="40"
+                r="34"
+                fill="none"
+                stroke="#f3f4f6"
+                strokeWidth="8"
+              />
+              <motion.circle
+                cx="40"
+                cy="40"
+                r="34"
+                fill="none"
+                stroke="#f59e0b"
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeDasharray={ringCircumference}
+                initial={{ strokeDashoffset: ringCircumference }}
+                animate={{
+                  strokeDashoffset: ringCircumference * (1 - goalPercent),
+                }}
+                transition={{ duration: 0.8 }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-sm font-extrabold text-gray-800">
+                {completionsToday}/{DAILY_GOAL_TARGET}
+              </span>
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-amber-500" />
+              <h2 className="font-bold text-gray-800">Daily Goal</h2>
+              <AnimatePresence>
+                {goalDone && (
+                  <motion.span
+                    initial={{ scale: 0, rotate: -30 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    exit={{ scale: 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                    className="inline-flex items-center gap-1 bg-green-100 text-green-600 text-xs font-bold px-2 py-0.5 rounded-full"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    Done!
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
+            <p className="text-gray-500 text-sm mt-1">
+              {goalDone
+                ? "Great job! You reached today's goal! 🎉"
+                : `Complete ${
+                    DAILY_GOAL_TARGET - completionsToday
+                  } more activities today!`}
+            </p>
+          </div>
+        </motion.section>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

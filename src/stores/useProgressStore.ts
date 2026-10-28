@@ -22,6 +22,23 @@ const defaultProgress: UserProgress = {
   lastActive: new Date().toISOString(),
 };
 
+export const DAILY_GOAL_TARGET = 3;
+
+export interface DailyGoal {
+  date: string;
+  completions: number;
+}
+
+export const todayKey = (): string => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const initialDailyGoal = (): DailyGoal => ({ date: todayKey(), completions: 0 });
+
 interface ProgressActions {
   addStars: (unitId: string, stars: number) => void;
   completeVocabulary: (unitId: string, vocabId: string) => void;
@@ -29,17 +46,19 @@ interface ProgressActions {
   completeReading: (unitId: string, readingId: string) => void;
   completeWriting: (unitId: string, exerciseId: string) => void;
   recordExerciseScore: (unitId: string, exerciseId: string, score: number) => void;
+  recordDailyActivity: () => void;
   earnBadge: (badge: Badge) => void;
   resetProgress: () => void;
   updateStreak: () => void;
 }
 
-type ProgressState = UserProgress & ProgressActions;
+type ProgressState = UserProgress & ProgressActions & { dailyGoal: DailyGoal };
 
 export const useProgressStore = create<ProgressState>()(
   persist(
     (set, get) => ({
       ...defaultProgress,
+      dailyGoal: initialDailyGoal(),
 
       addStars: (unitId, stars) =>
         set((state) => {
@@ -58,7 +77,8 @@ export const useProgressStore = create<ProgressState>()(
           return { unitProgress, totalStars, lastActive: new Date().toISOString() };
         }),
 
-      completeVocabulary: (unitId, vocabId) =>
+      completeVocabulary: (unitId, vocabId) => {
+        let completed = false;
         set((state) => {
           const unitProgress = { ...state.unitProgress };
           if (!unitProgress[unitId]) {
@@ -66,15 +86,19 @@ export const useProgressStore = create<ProgressState>()(
           }
           const current = unitProgress[unitId];
           if (!current.vocabularyMastered.includes(vocabId)) {
+            completed = true;
             unitProgress[unitId] = {
               ...current,
               vocabularyMastered: [...current.vocabularyMastered, vocabId],
             };
           }
           return { unitProgress, lastActive: new Date().toISOString() };
-        }),
+        });
+        if (completed) get().recordDailyActivity();
+      },
 
-      completeListening: (unitId, lessonId) =>
+      completeListening: (unitId, lessonId) => {
+        let completed = false;
         set((state) => {
           const unitProgress = { ...state.unitProgress };
           if (!unitProgress[unitId]) {
@@ -82,15 +106,19 @@ export const useProgressStore = create<ProgressState>()(
           }
           const current = unitProgress[unitId];
           if (!current.listeningCompleted.includes(lessonId)) {
+            completed = true;
             unitProgress[unitId] = {
               ...current,
               listeningCompleted: [...current.listeningCompleted, lessonId],
             };
           }
           return { unitProgress, lastActive: new Date().toISOString() };
-        }),
+        });
+        if (completed) get().recordDailyActivity();
+      },
 
-      completeReading: (unitId, readingId) =>
+      completeReading: (unitId, readingId) => {
+        let completed = false;
         set((state) => {
           const unitProgress = { ...state.unitProgress };
           if (!unitProgress[unitId]) {
@@ -98,15 +126,19 @@ export const useProgressStore = create<ProgressState>()(
           }
           const current = unitProgress[unitId];
           if (!current.readingCompleted.includes(readingId)) {
+            completed = true;
             unitProgress[unitId] = {
               ...current,
               readingCompleted: [...current.readingCompleted, readingId],
             };
           }
           return { unitProgress, lastActive: new Date().toISOString() };
-        }),
+        });
+        if (completed) get().recordDailyActivity();
+      },
 
-      completeWriting: (unitId, exerciseId) =>
+      completeWriting: (unitId, exerciseId) => {
+        let completed = false;
         set((state) => {
           const unitProgress = { ...state.unitProgress };
           if (!unitProgress[unitId]) {
@@ -114,15 +146,18 @@ export const useProgressStore = create<ProgressState>()(
           }
           const current = unitProgress[unitId];
           if (!current.writingCompleted.includes(exerciseId)) {
+            completed = true;
             unitProgress[unitId] = {
               ...current,
               writingCompleted: [...current.writingCompleted, exerciseId],
             };
           }
           return { unitProgress, lastActive: new Date().toISOString() };
-        }),
+        });
+        if (completed) get().recordDailyActivity();
+      },
 
-      recordExerciseScore: (unitId, exerciseId, score) =>
+      recordExerciseScore: (unitId, exerciseId, score) => {
         set((state) => {
           const unitProgress = { ...state.unitProgress };
           if (!unitProgress[unitId]) {
@@ -139,6 +174,22 @@ export const useProgressStore = create<ProgressState>()(
             bestScore: Math.max(current.bestScore, score),
           };
           return { unitProgress, lastActive: new Date().toISOString() };
+        });
+        get().recordDailyActivity();
+      },
+
+      recordDailyActivity: () =>
+        set((state) => {
+          const today = todayKey();
+          if (state.dailyGoal.date !== today) {
+            return { dailyGoal: { date: today, completions: 1 } };
+          }
+          return {
+            dailyGoal: {
+              ...state.dailyGoal,
+              completions: state.dailyGoal.completions + 1,
+            },
+          };
         }),
 
       earnBadge: (badge) =>
@@ -180,7 +231,8 @@ export const useProgressStore = create<ProgressState>()(
           };
         }),
 
-      resetProgress: () => set({ ...defaultProgress }),
+      resetProgress: () =>
+        set({ ...defaultProgress, dailyGoal: initialDailyGoal() }),
     }),
     {
       name: 'english-genius-progress',

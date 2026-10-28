@@ -14,6 +14,15 @@ export default defineConfig({
   },
   build: {
     sourcemap: 'hidden',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          'framer-motion': ['framer-motion'],
+          'lucide-react': ['lucide-react'],
+        },
+      },
+    },
   },
   plugins: [
     react({
@@ -21,7 +30,8 @@ export default defineConfig({
         plugins: [
           'react-dev-locator',
         ],
-      }),
+      },
+    }),
     traeBadgePlugin({
       variant: 'dark',
       position: 'bottom-right',
